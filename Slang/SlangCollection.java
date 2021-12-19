@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * Slang
@@ -15,6 +16,8 @@ import java.util.HashMap;
  */
 
 public class SlangCollection {
+    private static final String filepath = "cache.bin";
+
     private HashMap<String, ArrayList<String>> collection;
 
     public SlangCollection() {
@@ -52,7 +55,7 @@ public class SlangCollection {
         }
     }
 
-    public ArrayList<String> getSlang(String slang) {
+    public ArrayList<String> getDefinition(String slang) {
         if (collection.containsKey(slang)) {
             return collection.get(slang);
         }
@@ -93,6 +96,44 @@ public class SlangCollection {
 
     public HashMap<String, ArrayList<String>> getCollection() {
         return collection;
+    }
+
+    public HashMap<String, ArrayList<String>> getRandomSlang() {
+        Random random = new Random();
+        Object[] keySet = collection.keySet().toArray();
+        Object randomKey = keySet[random.nextInt(collection.size())];
+        HashMap<String, ArrayList<String>> result = new HashMap<>();
+        result.put(randomKey.toString(), collection.get(randomKey.toString()));
+        return result;
+    }
+
+    public void SaveCache() {
+        try {
+            FileOutputStream fileOut = new FileOutputStream(filepath);
+            ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
+            objectOut.writeObject(collection);
+            objectOut.close();
+            System.out.println("Saving list...");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void ReadCache() {
+        if (new File(filepath).exists()) {
+            collection.clear();
+            try {
+                FileInputStream fileInput = new FileInputStream(filepath);
+                ObjectInputStream objectInput = new ObjectInputStream(fileInput);
+                HashMap<String, ArrayList<String>> hashMap = (HashMap<String, ArrayList<String>>) objectInput.readObject();
+                if (hashMap != null) {
+                    collection = new HashMap<>(hashMap);
+                }
+                objectInput.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     private String FileBrowser(boolean isExporting) throws NullPointerException {
@@ -151,7 +192,7 @@ public class SlangCollection {
         return "";
     }
 
-    public void ImportSlangDictionary() throws IOException, IllegalArgumentException{
+    public void ImportSlangDictionary() throws IllegalArgumentException{
         String path = FileBrowser(false);
         if (!path.isEmpty()) {
             int count = 0;
@@ -167,16 +208,16 @@ public class SlangCollection {
                         String[] defs = data[1].split("\\|");
                         ArrayList<String> newListOfDefs = new ArrayList<>(Arrays.asList(defs));
                         try {
-                            addSlang(lastSlang, newListOfDefs);
+                            this.addSlang(lastSlang, newListOfDefs);
                         } catch (IllegalAccessException e) {
                             System.out.println("Slang Duplication ["+lastSlang+"] at line " + count);
                             System.out.println("Proceed to add any new definition...");
-                            addDefinition(lastSlang, newListOfDefs);
+                            this.addDefinition(lastSlang, newListOfDefs);
                             continue;
                         }
                     } else {
                         if (!lastSlang.equals("")) {
-                            addDefinition(lastSlang, data[0]);
+                            this.addDefinition(lastSlang, data[0]);
                         } else {
                             throw new IllegalArgumentException();
                         }
