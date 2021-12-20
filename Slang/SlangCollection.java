@@ -43,6 +43,12 @@ public class SlangCollection {
         }
     }
 
+    public void addSlang(String slang, String definition) throws IllegalAccessException, IllegalArgumentException {
+        ArrayList<String> definitions = new ArrayList<>();
+        definitions.add(definition);
+        this.addSlang(slang, definitions);
+    }
+
     public void removeSlang(String slang) throws IllegalAccessException, IllegalArgumentException {
         if (!slang.isEmpty()) {
             if (collection.containsKey(slang)) {
@@ -113,7 +119,7 @@ public class SlangCollection {
             ObjectOutputStream objectOut = new ObjectOutputStream(fileOut);
             objectOut.writeObject(collection);
             objectOut.close();
-            System.out.println("Saving list...");
+            System.out.println("Saving...");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

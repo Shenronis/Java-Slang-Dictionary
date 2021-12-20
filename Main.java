@@ -1,8 +1,13 @@
+import Slang.SlangCollection;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
@@ -12,7 +17,13 @@ public class Main {
 }
 
 class Dictionary extends JFrame implements ActionListener {
-    JButton control_add, control_del;
+    SlangCollection slangCollection;
+
+    JButton search_btn, control_add, control_del;
+    JComboBox<ComboItem> search_type;
+    JTextField search_input;
+    JList<String> dictionary_slang, dictionary_def;
+    DefaultListModel<String> dictionary_slang_model, dictionary_def_model;
 
     public Dictionary() {
         super("Slang Dictionary - 19127555");
@@ -20,58 +31,26 @@ class Dictionary extends JFrame implements ActionListener {
         this.setMinimumSize(new Dimension(600, 600));
         this.setLayout(new BorderLayout());
 
+        // Init
+        slangCollection = new SlangCollection();
+
         // Menu bar
         JMenuBar menuBar = new JMenuBar();
         menuBar.add(createFileMenu());
         menuBar.add(createMiscMenu());
 
-        // Main Panel
+        // Main panel
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
-        // Search part
-        JPanel panel_search = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JTextField search_input = new JTextField();
-        JComboBox<ComboItem> search_type = createTypeBox();
-        JButton search_btn = new JButton("Search");
-        search_type.setPreferredSize(new Dimension(150, 25));
-        search_input.setPreferredSize(new Dimension(500, 25));
-        search_btn.setPreferredSize(new Dimension(100,25));
-        panel_search.add(createTypeBox());
-        panel_search.add(search_input);
-        panel_search.add(search_btn);
+        // Search panel
+        JPanel panel_search = createSearchPanel();
 
-        // Data part
-        JPanel panel_dictionary = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panel_dictionary.setBorder(new EmptyBorder(10, 0, 10 ,0));
+        // Data panel
+        JPanel panel_dictionary = createDictionaryPanel();
 
-        JPanel panel_list_slang = new JPanel(new BorderLayout());
-        panel_list_slang.setPreferredSize(new Dimension(255, 500));
-        panel_list_slang.setBorder(new EmptyBorder(0, 0, 0, 5));
-
-        JPanel panel_list_def = new JPanel(new BorderLayout());
-        panel_list_def.setPreferredSize(new Dimension(500, 500));
-        panel_list_def.setBorder(new EmptyBorder(0, 5, 0, 0));
-
-        JList<String> dictionary_slang = new JList<String>();
-        JList<String> dictionary_def = new JList<String>();
-        panel_list_slang.add(dictionary_slang);
-        panel_list_def.add(dictionary_def);
-
-        panel_dictionary.add(panel_list_slang);
-        panel_dictionary.add(panel_list_def);
-
-        // Controls
-        JPanel panel_control = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-        control_add = new JButton("Add");
-        control_add.setPreferredSize(new Dimension(100, 25));
-
-        control_del = new JButton("Remove");
-        control_del.setPreferredSize(new Dimension(100, 25));
-
-        panel_control.add(control_add);
-        panel_control.add(control_del);
+        // Control panel
+        JPanel panel_control = createControlPanel();
 
         // Layout
         panel.add(panel_search, BorderLayout.NORTH);
@@ -112,6 +91,66 @@ class Dictionary extends JFrame implements ActionListener {
         return menu_misc;
     }
 
+    private JPanel createSearchPanel() {
+        JPanel panel_search = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        search_input = new JTextField();
+        search_type = createTypeBox();
+        search_btn = new JButton("Search"); search_btn.addActionListener(this);
+
+        search_type.setPreferredSize(new Dimension(150, 25));
+        search_input.setPreferredSize(new Dimension(500, 25));
+        search_btn.setPreferredSize(new Dimension(100,25));
+
+        panel_search.add(createTypeBox());
+        panel_search.add(search_input);
+        panel_search.add(search_btn);
+
+        return panel_search;
+    }
+
+    private JPanel createDictionaryPanel() {
+        JPanel panel_dictionary = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel_dictionary.setBorder(new EmptyBorder(10, 0, 10 ,0));
+
+        JPanel panel_list_slang = new JPanel(new BorderLayout());
+        panel_list_slang.setPreferredSize(new Dimension(255, 500));
+        panel_list_slang.setBorder(new EmptyBorder(0, 0, 0, 5));
+
+        JPanel panel_list_def = new JPanel(new BorderLayout());
+        panel_list_def.setPreferredSize(new Dimension(500, 500));
+        panel_list_def.setBorder(new EmptyBorder(0, 5, 0, 0));
+
+        dictionary_slang_model = new DefaultListModel<>();
+        dictionary_def_model = new DefaultListModel<>();
+
+        dictionary_slang = new JList<>(dictionary_slang_model);
+        dictionary_def = new JList<>(dictionary_def_model);
+        panel_list_slang.add(dictionary_slang);
+        panel_list_def.add(dictionary_def);
+
+        panel_dictionary.add(panel_list_slang);
+        panel_dictionary.add(panel_list_def);
+
+        return panel_dictionary;
+    }
+
+    private JPanel createControlPanel() {
+        JPanel panel_control = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        control_add = new JButton("Add");
+        control_add.addActionListener(this);
+        control_add.setPreferredSize(new Dimension(100, 25));
+
+        control_del = new JButton("Remove");
+        control_del.addActionListener(this);
+        control_del.setPreferredSize(new Dimension(100, 25));
+
+        panel_control.add(control_add);
+        panel_control.add(control_del);
+
+        return panel_control;
+    }
+
     private JComboBox<ComboItem> createTypeBox() {
         JComboBox<ComboItem> comboBox = new JComboBox<ComboItem>();
         comboBox.addItem(new ComboItem("Find by Slang", "slang"));
@@ -120,14 +159,38 @@ class Dictionary extends JFrame implements ActionListener {
         return comboBox;
     }
 
+    private void refresh() {
+        HashMap<String, ArrayList<String>> list = slangCollection.getCollection();
+        Object[] listKey = list.keySet().toArray();
+        dictionary_slang_model.removeAllElements();
+        for (Object slang : listKey) {
+            dictionary_slang_model.addElement(slang.toString());
+            ArrayList<String> defs = slangCollection.getDefinition(slang.toString());
+            for (String def : defs) {
+                dictionary_def_model.addElement(def);
+            }
+        }
+        dictionary_slang.setModel(dictionary_slang_model);
+        dictionary_def.setModel(dictionary_def_model);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == control_add) {
-            // to do add
+            String slang = JOptionPane.showInputDialog(this, "Slang:");
+            String def = JOptionPane.showInputDialog(this, "Definition:");
+            try {
+                slangCollection.addSlang(slang, def);
+            } catch (IllegalArgumentException input) {
+                JOptionPane.showMessageDialog(this, "Invalid input", "Warning", JOptionPane.WARNING_MESSAGE);
+            } catch (IllegalAccessException exist) {
+                JOptionPane.showConfirmDialog(this, "This Slang already exists!\nDo you want to add the definition to the existing one", "Add Definition?", JOptionPane.YES_NO_OPTION);
+            }
+            refresh();
         }
 
         if (e.getSource() == control_del) {
-            // to do del
+            System.out.println("Del");
         }
     }
 }
