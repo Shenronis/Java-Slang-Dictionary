@@ -17,6 +17,7 @@ import java.util.Random;
 
 public class SlangCollection {
     private static final String filepath = "cache.bin";
+    private static final String resetpath = "slang.bak";
 
     private HashMap<String, ArrayList<String>> collection;
 
@@ -29,6 +30,10 @@ public class SlangCollection {
         if (slangCollection.collection != null) {
             this.collection = new HashMap<>(slangCollection.collection);
         }
+    }
+
+    public boolean doesSlangExist(String slang) {
+        return collection.containsKey(slang);
     }
 
     public void addSlang(String slang, ArrayList<String> definition) throws IllegalAccessException, IllegalArgumentException {
@@ -61,15 +66,24 @@ public class SlangCollection {
         }
     }
 
+    public void editSlang(String slang, String newSlang) throws IllegalAccessException, IllegalArgumentException {
+        if (!slang.isEmpty()) {
+            if (collection.containsKey(slang)) {
+                ArrayList<String> values = collection.remove(slang);
+                collection.put(newSlang, values);
+            } else {
+                throw new IllegalAccessException();
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
     public ArrayList<String> getDefinition(String slang) {
         if (collection.containsKey(slang)) {
             return collection.get(slang);
         }
         return null;
-    }
-
-    public boolean doesSlangExist(String slang) {
-        return collection.containsKey(slang);
     }
 
     public void addDefinition(String slang, String definition) throws IllegalAccessException, IllegalArgumentException {
@@ -81,7 +95,7 @@ public class SlangCollection {
                     throw new IllegalAccessException();
                 }
             } else {
-                ArrayList<String> definitions = new ArrayList<>();
+                ArrayList<String> definitions = new ArrayList<>(collection.get(slang));
                 definitions.add(definition);
                 addSlang(slang, definitions);
             }
@@ -100,17 +114,44 @@ public class SlangCollection {
         }
     }
 
+    public void removeDefinition(String slang, String def) throws IllegalAccessException, IllegalArgumentException {
+        if (!slang.isEmpty()) {
+            if (collection.containsKey(slang)) {
+                ArrayList<String> updated_defs = collection.get(slang);
+                updated_defs.remove(def);
+                collection.put(slang, updated_defs);
+            } else {
+                throw new IllegalAccessException();
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public void editDefinition(String slang, String oldDef, String newDef) throws IllegalAccessException, IllegalArgumentException {
+        if (!slang.isEmpty()) {
+            if (collection.containsKey(slang)) {
+                ArrayList<String> values = collection.get(slang);
+                values.remove(oldDef);
+                values.add(newDef);
+                collection.put(slang, values);
+            } else {
+                throw new IllegalAccessException();
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
     public HashMap<String, ArrayList<String>> getCollection() {
         return collection;
     }
 
-    public HashMap<String, ArrayList<String>> getRandomSlang() {
+    public String getRandomSlang() {
         Random random = new Random();
         Object[] keySet = collection.keySet().toArray();
         Object randomKey = keySet[random.nextInt(collection.size())];
-        HashMap<String, ArrayList<String>> result = new HashMap<>();
-        result.put(randomKey.toString(), collection.get(randomKey.toString()));
-        return result;
+        return randomKey.toString();
     }
 
     public void SaveCache() {
@@ -151,10 +192,10 @@ public class SlangCollection {
         int currentDialog;
 
         if (!isExporting) {
-            fileChooser.setDialogTitle("Select Student File (*.csv)");
+            fileChooser.setDialogTitle("Select Slang List (*.csv)");
             currentDialog = fileChooser.showOpenDialog(null);
         } else {
-            fileChooser.setDialogTitle("Export Student List (*.csv)");
+            fileChooser.setDialogTitle("Export Slang List (*.csv)");
             currentDialog = fileChooser.showSaveDialog(null);
         }
 
@@ -198,8 +239,11 @@ public class SlangCollection {
         return "";
     }
 
-    public void ImportSlangDictionary() throws IllegalArgumentException{
-        String path = FileBrowser(false);
+    public void ImportSlangDictionary() throws IllegalArgumentException {
+        ImportSlangDictionary(FileBrowser(false));
+    }
+
+    public void ImportSlangDictionary(String path) throws IllegalArgumentException{
         if (!path.isEmpty()) {
             int count = 0;
             String row;
@@ -213,6 +257,9 @@ public class SlangCollection {
                         lastSlang = data[0];
                         String[] defs = data[1].split("\\|");
                         ArrayList<String> newListOfDefs = new ArrayList<>(Arrays.asList(defs));
+                        for (int i = 0; i < newListOfDefs.size(); i++) {
+                            newListOfDefs.set(i, newListOfDefs.get(i).replaceAll("\\s", ""));
+                        }
                         try {
                             this.addSlang(lastSlang, newListOfDefs);
                         } catch (IllegalAccessException e) {
@@ -231,7 +278,6 @@ public class SlangCollection {
                     count++;
                 }
                 reader.close();
-
                 System.out.println("Successfully imported " + path);
                 System.out.println(count + " Slang(s) was imported!");
             } catch (IllegalArgumentException e) {
@@ -241,5 +287,9 @@ public class SlangCollection {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void resetSlangDictionary() throws FileNotFoundException {
+        ImportSlangDictionary(resetpath);
     }
 }
