@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -95,8 +96,8 @@ class Dictionary extends JFrame implements ActionListener {
 
         // Multiple choice menu
         JMenu sub_mc = new JMenu("Multiple Choices");
-        opt_bySlang = new JMenuItem("by Slang");
-        opt_byDef = new JMenuItem("by Definition");
+        opt_bySlang = new JMenuItem("by Slang"); opt_bySlang.addActionListener(this);
+        opt_byDef = new JMenuItem("by Definition"); opt_byDef.addActionListener(this);
         sub_mc.add(opt_bySlang);
         sub_mc.add(opt_byDef);
 
@@ -299,6 +300,64 @@ class Dictionary extends JFrame implements ActionListener {
         }
     }
 
+    public void quiz(boolean bySlang) {
+        JDialog quizPopup = new JDialog(this, "Slang Quiz");
+        quizPopup.setLayout(new BorderLayout());
+        quizPopup.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        Random random = new Random();
+        ArrayList<String> answerLabels = new ArrayList<>();
+
+        String chosenSlang = slangCollection.getRandomSlang();
+        ArrayList<String> defs = slangCollection.getDefinition(chosenSlang);
+        String chosenDef = defs.get(random.nextInt(defs.size()));
+
+        JLabel questionLabel = new JLabel();
+        JPanel ans_panel = new JPanel();
+
+        if (bySlang) {
+            String randomDef;
+            answerLabels.add(chosenDef);
+            questionLabel.setText("What does " + chosenSlang + " mean?");
+            for (int i = 0; i < 3; i++) {
+                String randomSlang = slangCollection.getRandomSlang();
+                ArrayList<String> randomDefs = slangCollection.getDefinition(randomSlang);
+                do {
+                    randomDef = randomDefs.get(random.nextInt(randomDefs.size()));
+                } while (randomDef.equals(chosenDef));
+                answerLabels.add(randomDef);
+            }
+
+            while(!answerLabels.isEmpty()) {
+                int randomIndex = random.nextInt(answerLabels.size());
+                JButton newButton = new JButton(answerLabels.get(randomIndex));
+                newButton.addActionListener(e -> {
+                    if (newButton.getText().equals(chosenDef)) {
+                        JOptionPane.showMessageDialog(quizPopup, "Excellent answer! " + chosenSlang + " means " + chosenDef, "CORRECT", JOptionPane.PLAIN_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(quizPopup, "Pity, " + chosenSlang + " means " + chosenDef, "WRONG", JOptionPane.PLAIN_MESSAGE);
+                    }
+                    quizPopup.dispose();
+                });
+
+                FontMetrics metrics = newButton.getFontMetrics(getFont());
+                int width = metrics.stringWidth(newButton.getText());
+                int height = metrics.getHeight();
+                Dimension btnSize =  new Dimension(width+100,height+10);
+                newButton.setPreferredSize(btnSize);
+                newButton.setBounds(new Rectangle(getLocation(), getPreferredSize()));
+
+                ans_panel.add(newButton);
+                answerLabels.remove(randomIndex);
+            }
+        }
+
+        quizPopup.add(questionLabel, BorderLayout.NORTH);
+        quizPopup.add(ans_panel, BorderLayout.CENTER);
+        quizPopup.pack();
+        quizPopup.setVisible(true);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == opt_save) {
@@ -320,9 +379,9 @@ class Dictionary extends JFrame implements ActionListener {
 
         if (e.getSource() == opt_slangRand) {
             String slang = slangCollection.getRandomSlang();
-
             ArrayList<String> defs = slangCollection.getDefinition(slang);
             String definition = "\n";
+
             for (String def : defs) {
                 definition += def + "\n";
             }
@@ -337,6 +396,10 @@ class Dictionary extends JFrame implements ActionListener {
                 ta.append(timestamp.toString() + " " + historyList.get(timestamp.toString()) + "\n");
             }
             JOptionPane.showMessageDialog(this, new JScrollPane(ta), "Search history", JOptionPane.PLAIN_MESSAGE);
+        }
+
+        if (e.getSource() == opt_bySlang) {
+            quiz(true);
         }
 
         if (e.getSource() == control_add) {

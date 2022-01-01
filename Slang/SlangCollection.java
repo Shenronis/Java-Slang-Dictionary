@@ -32,6 +32,13 @@ public class SlangCollection {
         }
     }
 
+    public int length() {
+        if (collection != null) {
+            return collection.size();
+        }
+        return 0;
+    }
+
     public boolean doesSlangExist(String slang) {
         return collection.containsKey(slang);
     }
