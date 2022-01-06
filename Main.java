@@ -350,6 +350,39 @@ class Dictionary extends JFrame implements ActionListener {
                 ans_panel.add(newButton);
                 answerLabels.remove(randomIndex);
             }
+        } else {
+            String randomSlang;
+            answerLabels.add(chosenSlang);
+            questionLabel.setText("What does " + chosenDef + " mean?");
+            for (int i = 0; i < 3; i++) {
+                do {
+                    randomSlang = slangCollection.getRandomSlang();
+                } while (randomSlang.equals(chosenDef));
+                answerLabels.add(randomSlang);
+            }
+
+            while(!answerLabels.isEmpty()) {
+                int randomIndex = random.nextInt(answerLabels.size());
+                JButton newButton = new JButton(answerLabels.get(randomIndex));
+                newButton.addActionListener(e -> {
+                    if (newButton.getText().equals(chosenSlang)) {
+                        JOptionPane.showMessageDialog(quizPopup, "Excellent answer! " + chosenDef + " means " + chosenSlang, "CORRECT", JOptionPane.PLAIN_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(quizPopup, "Pity, " + chosenDef + " means " + chosenSlang, "WRONG", JOptionPane.PLAIN_MESSAGE);
+                    }
+                    quizPopup.dispose();
+                });
+
+                FontMetrics metrics = newButton.getFontMetrics(getFont());
+                int width = metrics.stringWidth(newButton.getText());
+                int height = metrics.getHeight();
+                Dimension btnSize =  new Dimension(width+100,height+10);
+                newButton.setPreferredSize(btnSize);
+                newButton.setBounds(new Rectangle(getLocation(), getPreferredSize()));
+
+                ans_panel.add(newButton);
+                answerLabels.remove(randomIndex);
+            }
         }
 
         quizPopup.add(questionLabel, BorderLayout.NORTH);
@@ -402,6 +435,10 @@ class Dictionary extends JFrame implements ActionListener {
             quiz(true);
         }
 
+        if (e.getSource() == opt_byDef) {
+            quiz(false);
+        }
+
         if (e.getSource() == control_add) {
             String slang, def;
             try {
@@ -411,6 +448,7 @@ class Dictionary extends JFrame implements ActionListener {
                         System.out.println("SELECTED VALUE:" + dictionary_slang.getSelectedValue() + def);
                         slangCollection.addDefinition(dictionary_slang.getSelectedValue(), def);
                         refreshDefinitions(dictionary_slang.getSelectedValue());
+                        slangCollection.SaveCache();
                     }
                 } else {
                     slang = JOptionPane.showInputDialog(this, "Slang:");
@@ -420,10 +458,12 @@ class Dictionary extends JFrame implements ActionListener {
                             int opt = JOptionPane.showConfirmDialog(this, "This Slang already exists!\nDo you want to add the definition to the existing one", "Add Definition?", JOptionPane.YES_NO_OPTION);
                             if (opt == JOptionPane.YES_OPTION) {
                                 slangCollection.addDefinition(slang, def);
+                                slangCollection.SaveCache();
                             }
                         } else {
                             slangCollection.addSlang(slang, def);
                             refresh();
+                            slangCollection.SaveCache();
                         }
                     }
                 }
@@ -442,6 +482,7 @@ class Dictionary extends JFrame implements ActionListener {
                     if (newSlang != null) {
                         slangCollection.editSlang(oldSlang, newSlang);
                         refresh();
+                        slangCollection.SaveCache();
                     }
                 } else if (currentSelect == dictionary_def) {
                     String slang = dictionary_slang.getSelectedValue();
@@ -450,6 +491,7 @@ class Dictionary extends JFrame implements ActionListener {
                     if (newDef != null) {
                         slangCollection.editDefinition(slang, oldDef, newDef);
                         refresh();
+                        slangCollection.SaveCache();
                     }
                 }
             } catch (Exception ex) {
@@ -464,6 +506,7 @@ class Dictionary extends JFrame implements ActionListener {
                     if (value != null) {
                         slangCollection.removeSlang(value);
                         refresh();
+                        slangCollection.SaveCache();
                         JOptionPane.showMessageDialog(this, value + " was removed from the dictionary", "Success", JOptionPane.WARNING_MESSAGE);
                     } else JOptionPane.showMessageDialog(this, "Please select a value", "Info", JOptionPane.WARNING_MESSAGE);
                 } else if (currentSelect == dictionary_def) {
@@ -472,6 +515,7 @@ class Dictionary extends JFrame implements ActionListener {
                         String curSlang = dictionary_slang.getSelectedValue();
                         slangCollection.removeDefinition(curSlang, value);
                         refreshDefinitions(curSlang);
+                        slangCollection.SaveCache();
                         JOptionPane.showMessageDialog(this, value + " was removed from " + curSlang + " definitions", "Success", JOptionPane.WARNING_MESSAGE);
                     } else JOptionPane.showMessageDialog(this, "Please select a value", "Info", JOptionPane.WARNING_MESSAGE);
                 }
