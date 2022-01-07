@@ -27,7 +27,7 @@ class Dictionary extends JFrame implements ActionListener {
     final String historyPath = "history.bin";
     HashMap<String, String> historyList;
 
-    JMenuItem opt_save, opt_load, opt_reset, opt_bySlang, opt_byDef, opt_slangRand, opt_history;
+    JMenuItem opt_load, opt_reset, opt_bySlang, opt_byDef, opt_slangRand, opt_history;
     JButton search_btn, clear_btn, control_add, control_del, control_edit;
     JComboBox<ComboItem> search_type;
     JTextField search_input;
@@ -80,12 +80,9 @@ class Dictionary extends JFrame implements ActionListener {
     private JMenu createFileMenu() {
         JMenu menu_file = new JMenu("File");
 
-        // Save & Load
-        opt_save = new JMenuItem("Save"); opt_save.addActionListener(this);
         opt_load = new JMenuItem("Import"); opt_load.addActionListener(this);
         opt_reset = new JMenuItem("Restore"); opt_reset.addActionListener(this);
 
-        menu_file.add(opt_save);
         menu_file.add(opt_load);
         menu_file.add(opt_reset);
         return  menu_file;
@@ -393,10 +390,6 @@ class Dictionary extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == opt_save) {
-            slangCollection.SaveCache();
-        }
-
         if (e.getSource() == opt_load) {
             slangCollection.ImportSlangDictionary();
         }
